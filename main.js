@@ -160,7 +160,25 @@ function handle_move(start_row, start_col, end_row, end_col) {
     }
 }
 
+function is_master(square) {
+    return square == WM || square == BM;
+}
+
+function score_move(row, col, dst_row, dst_col) {
+    let master_to_other_base = (GAME_STATE.current_turn == "white" && GAME_STATE.board[row][col] == WM && dst_row == 0 && dst_col == 2) || (GAME_STATE.current_turn == "black" && GAME_STATE.board[row][col] == BM && dst_row == 4 && dst_col == 2);
+    if (is_master(GAME_STATE.board[dst_row][dst_col]) || master_to_other_base) {
+        return 10;
+    }
+    if (GAME_STATE.board[dst_row][dst_col] != EMPTY) {
+        return 5;
+    }
+    return 1;
+}
+
 function get_ai_move() {
+    let best_move = null;
+    let best_selected_move = null;
+    let best_move_score = -1;
     for (let move of {white: GAME_STATE.white_moves, black: GAME_STATE.black_moves}[GAME_STATE.current_turn]) {
         GAME_STATE.selected_move = move;
         for (let row = 0; row < 5; row++) {
@@ -168,15 +186,20 @@ function get_ai_move() {
                 if (GAME_STATE.board[row][col] != EMPTY && get_color(GAME_STATE.board[row][col]) == GAME_STATE.current_turn) {
                     // Move first piece.
                     let valid_moves = get_valid_moves(row, col);
-                    if (valid_moves.length > 0) {
-                        [dst_row, dst_col] = valid_moves[0];
-                        return [row, col, dst_row, dst_col];
+                    for (let [dst_row, dst_col] of valid_moves) {
+                        let move_score = score_move(row, col, dst_row, dst_col);
+                        if (move_score > best_move_score) {
+                            best_selected_move = move;
+                            best_move = [row, col, dst_row, dst_col];
+                            best_move_score = move_score;
+                        }
                     }
                 }
             }
         }
     }
-    console.assert(false);
+    GAME_STATE.selected_move = best_selected_move;
+    return best_move;
 }
 
 let move_cards = {
