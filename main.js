@@ -119,38 +119,44 @@ function draw_game_state() {
 
 let AI_MODE = true;
 
+function update_game_state_move(game_state, start_row, start_col, end_row, end_col) {
+    // Make move.
+    game_state.board[end_row][end_col] = game_state.board[start_row][start_col];
+    game_state.board[start_row][start_col] = EMPTY;
+
+    // Update cards.
+    if (game_state.current_turn == "white") {
+        game_state.white_moves = [...game_state.white_moves.filter(m => m != game_state.selected_move), game_state.next_white_move];
+        game_state.next_white_move = null;
+        game_state.next_black_move = game_state.selected_move;
+    } else if (game_state.current_turn == "black") {
+        game_state.black_moves = [game_state.next_black_move, ...game_state.black_moves.filter(m => m != game_state.selected_move)];
+        game_state.next_black_move = null;
+        game_state.next_white_move = game_state.selected_move;
+    }
+    game_state.selected_move = null;
+
+    game_state.current_turn = {white: "black", black: "white"}[game_state.current_turn];
+}
+
 function handle_move(start_row, start_col, end_row, end_col) {
-    let valid_moves = get_valid_moves(start_row, start_col);
+    let valid_moves = get_valid_moves(GAME_STATE, start_row, start_col);
     if (valid_moves.length > 0 && valid_moves.map(([row, col]) => row == end_row && col == end_col).reduce((x, y) => x || y)) {
         // Check for capture of master.
         let capture = GAME_STATE.board[end_row][end_col];
         let master_captured = (GAME_STATE.current_turn == "white" && capture == BM) || (GAME_STATE.current_turn == "black" && capture == WM)
 
-        // Make move.
-        GAME_STATE.board[end_row][end_col] = GAME_STATE.board[start_row][start_col];
-        GAME_STATE.board[start_row][start_col] = EMPTY;
-
-        // Update cards.
-        if (GAME_STATE.current_turn == "white") {
-            GAME_STATE.white_moves = [...GAME_STATE.white_moves.filter(m => m != GAME_STATE.selected_move), GAME_STATE.next_white_move];
-            GAME_STATE.next_white_move = null;
-            GAME_STATE.next_black_move = GAME_STATE.selected_move;
-        } else if (GAME_STATE.current_turn == "black") {
-            GAME_STATE.black_moves = [GAME_STATE.next_black_move, ...GAME_STATE.black_moves.filter(m => m != GAME_STATE.selected_move)];
-            GAME_STATE.next_black_move = null;
-            GAME_STATE.next_white_move = GAME_STATE.selected_move;
-        }
-        GAME_STATE.selected_move = null;
+        update_game_state_move(GAME_STATE, start_row, start_col, end_row, end_col)
 
         draw_game_state();
 
         let master_in_other_base = GAME_STATE.board[0][2] == WM || GAME_STATE.board[4][2] == BM;
 
         if (master_captured || master_in_other_base) {
-            window.alert(`${GAME_STATE.current_turn} wins!`);
+            let winner = {white: "black", black: "white"}[GAME_STATE.current_turn];
+            window.alert(`${winner} wins!`);
             GAME_STATE.interactable = false;
         } else {
-            GAME_STATE.current_turn = {white: "black", black: "white"}[GAME_STATE.current_turn];
             if (GAME_STATE.current_turn == "black" && AI_MODE) {
                 handle_move(...get_ai_move());
             }
@@ -164,42 +170,71 @@ function is_master(square) {
     return square == WM || square == BM;
 }
 
-function score_move(row, col, dst_row, dst_col) {
-    let master_to_other_base = (GAME_STATE.current_turn == "white" && GAME_STATE.board[row][col] == WM && dst_row == 0 && dst_col == 2) || (GAME_STATE.current_turn == "black" && GAME_STATE.board[row][col] == BM && dst_row == 4 && dst_col == 2);
-    if (is_master(GAME_STATE.board[dst_row][dst_col]) || master_to_other_base) {
-        return 10;
-    }
-    if (GAME_STATE.board[dst_row][dst_col] != EMPTY) {
-        return 5;
-    }
+function piece_score(square) {
+    if (is_master(square)) return 10;
     return 1;
 }
 
-function get_ai_move() {
-    let best_move = null;
-    let best_selected_move = null;
-    let best_move_score = -1;
-    for (let move of {white: GAME_STATE.white_moves, black: GAME_STATE.black_moves}[GAME_STATE.current_turn]) {
-        GAME_STATE.selected_move = move;
+function score_game_state(game_state) {
+    let score = 0;
+    for (let row = 0; row < 5; row++) {
+        for (let col = 0; col < 5; col++) {
+            let square = game_state.board[row][col];
+            if (square != EMPTY) {
+                // Flipped bc. we evaluate after a move has been made (it is now the opponent's turn).
+                if (get_color(square) != game_state.current_turn) {
+                    score += piece_score(square);
+                } else {
+                    score -= piece_score(square);
+                }
+            }
+        }
+    }
+    return score;
+}
+
+function get_all_moves(game_state) {
+    let all_moves = []
+    for (let move of {white: game_state.white_moves, black: game_state.black_moves}[game_state.current_turn]) {
+        game_state.selected_move = move;
         for (let row = 0; row < 5; row++) {
             for (let col = 0; col < 5; col++) {
-                if (GAME_STATE.board[row][col] != EMPTY && get_color(GAME_STATE.board[row][col]) == GAME_STATE.current_turn) {
+                if (game_state.board[row][col] != EMPTY && get_color(game_state.board[row][col]) == game_state.current_turn) {
                     // Move first piece.
-                    let valid_moves = get_valid_moves(row, col);
+                    let valid_moves = get_valid_moves(game_state, row, col);
                     for (let [dst_row, dst_col] of valid_moves) {
-                        let move_score = score_move(row, col, dst_row, dst_col);
-                        if (move_score > best_move_score) {
-                            best_selected_move = move;
-                            best_move = [row, col, dst_row, dst_col];
-                            best_move_score = move_score;
-                        }
+                        all_moves.push([move, row, col, dst_row, dst_col]);
                     }
                 }
             }
         }
     }
-    GAME_STATE.selected_move = best_selected_move;
-    return best_move;
+    return all_moves;
+}
+
+function deepcopy(object) {
+    // TODO dumb
+    return JSON.parse(JSON.stringify(object));
+}
+
+function get_ai_move() {
+    let moves = get_all_moves(GAME_STATE);
+    let best_move = null;
+    let best_move_score = -1;
+    for (let [move, row, col, dst_row, dst_col] of moves) {
+        // Try the move and score it.
+        game_state = deepcopy(GAME_STATE);
+        game_state.selected_move = move;
+        update_game_state_move(game_state, row, col, dst_row, dst_col);
+        let score = score_game_state(game_state);
+        if (score > best_move_score) {
+            best_move = [move, row, col, dst_row, dst_col];
+            best_move_score = score;
+        }
+    }
+    let [move, row, col, dst_row, dst_col] = best_move;
+    GAME_STATE.selected_move = move;
+    return [row, col, dst_row, dst_col];
 }
 
 let move_cards = {
@@ -257,15 +292,15 @@ function on_board(row, col) {
     return 0 <= row && row < 5 && 0 <= col && col < 5;
 }
 
-function get_valid_moves(row, col) {
-    if (GAME_STATE.selected_move) {
-        return get_valid_moves_for_card(row, col, GAME_STATE.selected_move);
+function get_valid_moves(game_state, row, col) {
+    if (game_state.selected_move) {
+        return get_valid_moves_for_card(game_state, row, col, game_state.selected_move);
     }
     return [];
 }
 
-function get_valid_moves_for_card(row, col, card_name) {
-    let color = get_color(GAME_STATE.board[row][col])
+function get_valid_moves_for_card(game_state, row, col, card_name) {
+    let color = get_color(game_state.board[row][col])
     let moves = [];
     for (let [drow, dcol] of move_cards_offsets[card_name]) {
         if (color == "black") {
@@ -273,7 +308,7 @@ function get_valid_moves_for_card(row, col, card_name) {
             dcol = -dcol;
         }
         if (on_board(row + drow, col + dcol)) {
-            let dst_square = GAME_STATE.board[row + drow][col + dcol];
+            let dst_square = game_state.board[row + drow][col + dcol];
             if (dst_square == EMPTY || get_color(dst_square) != color) {
                 moves.push([row + drow, col + dcol]);
             }
@@ -283,7 +318,7 @@ function get_valid_moves_for_card(row, col, card_name) {
 }
 
 function handle_move_attempt_start(row, col) {
-    let valid_moves = get_valid_moves(row, col);
+    let valid_moves = get_valid_moves(GAME_STATE, row, col);
     for (let [move_row, move_col] of valid_moves) {
         board_divs[move_row][move_col].classList.add("valid-move");
     }
