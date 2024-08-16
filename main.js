@@ -61,22 +61,31 @@ function draw_board(board) {
     }
 }
 
-let game_state = {
-    board: [
-        [BP, BP, BM, BP, BP],
-        [EMPTY, EMPTY, EMPTY, EMPTY, EMPTY],
-        [EMPTY, EMPTY, EMPTY, EMPTY, EMPTY],
-        [EMPTY, EMPTY, EMPTY, EMPTY, EMPTY],
-        [WP, WP, WM, WP, WP]
-    ],
-    white_moves: ["rooster", "boar"],
-    black_moves: ["tiger", "monkey"],
-    current_turn: "white",
-    next_white_move: "goose",
-    next_black_move: null,
-    selected_move: null,
-    interactable: true
-};
+function init_game_state() {
+    let possible_moves = Object.keys(move_cards);
+    function get_random_move() {
+        let i = Math.floor(Math.random()*possible_moves.length);
+        let move = possible_moves[i];
+        possible_moves = [...possible_moves.slice(0, i), ...possible_moves.slice(i + 1, possible_moves.length)];
+        return move;
+    }
+    return {
+        board: [
+            [BP, BP, BM, BP, BP],
+            [EMPTY, EMPTY, EMPTY, EMPTY, EMPTY],
+            [EMPTY, EMPTY, EMPTY, EMPTY, EMPTY],
+            [EMPTY, EMPTY, EMPTY, EMPTY, EMPTY],
+            [WP, WP, WM, WP, WP]
+        ],
+        white_moves: [get_random_move(), get_random_move()],
+        black_moves: [get_random_move(), get_random_move()],
+        current_turn: "white",
+        next_white_move: get_random_move(),
+        next_black_move: null,
+        selected_move: null,
+        interactable: true
+    };
+}
 
 let white_moves_div = document.getElementById("white-moves");
 let black_moves_div = document.getElementById("black-moves");
@@ -280,4 +289,5 @@ function draw_move_card(color, card_name, selectable) {
     return card_div;
 }
 
+let game_state = init_game_state();
 draw_game_state();
