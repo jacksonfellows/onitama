@@ -12,13 +12,13 @@ let start_row_col = null;
 for (let row = 0; row < 5; row++) {
     for (let col = 0; col < 5; col++) {
         board_divs[row][col].addEventListener("mousedown", _ => {
-            if (game_state.interactable && game_state.board[row][col] != EMPTY) {
+            if (GAME_STATE.interactable && GAME_STATE.board[row][col] != EMPTY) {
                 handle_move_attempt_start(row, col);
                 start_row_col = [row, col];
             }
         });
         board_divs[row][col].addEventListener("mouseup", _ => {
-            if (game_state.interactable && start_row_col) {
+            if (GAME_STATE.interactable && start_row_col) {
                 handle_move_attempt_end();
                 [start_row, start_col] = start_row_col;
                 if (start_row != row || start_col != col) {
@@ -103,54 +103,80 @@ function set_children(div, new_children) {
 }
 
 function draw_game_state() {
-    draw_board(game_state.board);
+    draw_board(GAME_STATE.board);
 
-    set_children(white_moves_div, game_state.white_moves.map(card_name => draw_move_card("white", card_name, true)));
-    set_children(black_moves_div, game_state.black_moves.map(card_name => draw_move_card("black", card_name, true)));
+    set_children(white_moves_div, GAME_STATE.white_moves.map(card_name => draw_move_card("white", card_name, true)));
+    set_children(black_moves_div, GAME_STATE.black_moves.map(card_name => draw_move_card("black", card_name, true)));
 
-    if (game_state.next_white_move) {
-        set_children(next_white_move_div, [draw_move_card("white", game_state.next_white_move, false)]);
+    if (GAME_STATE.next_white_move) {
+        set_children(next_white_move_div, [draw_move_card("white", GAME_STATE.next_white_move, false)]);
         set_children(next_black_move_div, []);
-    } else if (game_state.next_black_move) {
+    } else if (GAME_STATE.next_black_move) {
         set_children(next_white_move_div, []);
-        set_children(next_black_move_div, [draw_move_card("black", game_state.next_black_move, false)]);
+        set_children(next_black_move_div, [draw_move_card("black", GAME_STATE.next_black_move, false)]);
     }
 }
+
+let AI_MODE = true;
 
 function handle_move(start_row, start_col, end_row, end_col) {
     let valid_moves = get_valid_moves(start_row, start_col);
     if (valid_moves.length > 0 && valid_moves.map(([row, col]) => row == end_row && col == end_col).reduce((x, y) => x || y)) {
         // Check for capture of master.
-        let capture = game_state.board[end_row][end_col];
-        let master_captured = (game_state.current_turn == "white" && capture == BM) || (game_state.current_turn == "black" && capture == WM)
+        let capture = GAME_STATE.board[end_row][end_col];
+        let master_captured = (GAME_STATE.current_turn == "white" && capture == BM) || (GAME_STATE.current_turn == "black" && capture == WM)
 
         // Make move.
-        game_state.board[end_row][end_col] = game_state.board[start_row][start_col];
-        game_state.board[start_row][start_col] = EMPTY;
+        GAME_STATE.board[end_row][end_col] = GAME_STATE.board[start_row][start_col];
+        GAME_STATE.board[start_row][start_col] = EMPTY;
 
         // Update cards.
-        if (game_state.current_turn == "white") {
-            game_state.white_moves = [...game_state.white_moves.filter(m => m != game_state.selected_move), game_state.next_white_move];
-            game_state.next_white_move = null;
-            game_state.next_black_move = game_state.selected_move;
-        } else if (game_state.current_turn == "black") {
-            game_state.black_moves = [game_state.next_black_move, ...game_state.black_moves.filter(m => m != game_state.selected_move)];
-            game_state.next_black_move = null;
-            game_state.next_white_move = game_state.selected_move;
+        if (GAME_STATE.current_turn == "white") {
+            GAME_STATE.white_moves = [...GAME_STATE.white_moves.filter(m => m != GAME_STATE.selected_move), GAME_STATE.next_white_move];
+            GAME_STATE.next_white_move = null;
+            GAME_STATE.next_black_move = GAME_STATE.selected_move;
+        } else if (GAME_STATE.current_turn == "black") {
+            GAME_STATE.black_moves = [GAME_STATE.next_black_move, ...GAME_STATE.black_moves.filter(m => m != GAME_STATE.selected_move)];
+            GAME_STATE.next_black_move = null;
+            GAME_STATE.next_white_move = GAME_STATE.selected_move;
         }
-        game_state.selected_move = null;
+        GAME_STATE.selected_move = null;
 
         draw_game_state();
 
-        let master_in_other_base = game_state.board[0][2] == WM || game_state.board[4][2] == BM;
+        let master_in_other_base = GAME_STATE.board[0][2] == WM || GAME_STATE.board[4][2] == BM;
 
         if (master_captured || master_in_other_base) {
-            window.alert(`${game_state.current_turn} wins!`);
-            game_state.interactable = false;
+            window.alert(`${GAME_STATE.current_turn} wins!`);
+            GAME_STATE.interactable = false;
         } else {
-            game_state.current_turn = {white: "black", black: "white"}[game_state.current_turn];
+            GAME_STATE.current_turn = {white: "black", black: "white"}[GAME_STATE.current_turn];
+            if (GAME_STATE.current_turn == "black" && AI_MODE) {
+                handle_move(...get_ai_move());
+            }
+        }
+    } else {
+        console.error("Tried to play an invalid move...");
+    }
+}
+
+function get_ai_move() {
+    for (let move of {white: GAME_STATE.white_moves, black: GAME_STATE.black_moves}[GAME_STATE.current_turn]) {
+        GAME_STATE.selected_move = move;
+        for (let row = 0; row < 5; row++) {
+            for (let col = 0; col < 5; col++) {
+                if (GAME_STATE.board[row][col] != EMPTY && get_color(GAME_STATE.board[row][col]) == GAME_STATE.current_turn) {
+                    // Move first piece.
+                    let valid_moves = get_valid_moves(row, col);
+                    if (valid_moves.length > 0) {
+                        [dst_row, dst_col] = valid_moves[0];
+                        return [row, col, dst_row, dst_col];
+                    }
+                }
+            }
         }
     }
+    console.assert(false);
 }
 
 let move_cards = {
@@ -209,14 +235,14 @@ function on_board(row, col) {
 }
 
 function get_valid_moves(row, col) {
-    if (game_state.selected_move) {
-        return get_valid_moves_for_card(row, col, game_state.selected_move);
+    if (GAME_STATE.selected_move) {
+        return get_valid_moves_for_card(row, col, GAME_STATE.selected_move);
     }
     return [];
 }
 
 function get_valid_moves_for_card(row, col, card_name) {
-    let color = get_color(game_state.board[row][col])
+    let color = get_color(GAME_STATE.board[row][col])
     let moves = [];
     for (let [drow, dcol] of move_cards_offsets[card_name]) {
         if (color == "black") {
@@ -224,7 +250,7 @@ function get_valid_moves_for_card(row, col, card_name) {
             dcol = -dcol;
         }
         if (on_board(row + drow, col + dcol)) {
-            let dst_square = game_state.board[row + drow][col + dcol];
+            let dst_square = GAME_STATE.board[row + drow][col + dcol];
             if (dst_square == EMPTY || get_color(dst_square) != color) {
                 moves.push([row + drow, col + dcol]);
             }
@@ -249,8 +275,8 @@ function handle_move_attempt_end() {
 }
 
 function handle_move_select(color, card_name, div) {
-    if (game_state.interactable && color == game_state.current_turn) {
-        game_state.selected_move = card_name;
+    if (GAME_STATE.interactable && color == GAME_STATE.current_turn) {
+        GAME_STATE.selected_move = card_name;
         let moves_div = {white: white_moves_div, black: black_moves_div}[color];
         for (let div_ of moves_div.childNodes) {
             div_.classList.remove("selected-move");
@@ -289,5 +315,5 @@ function draw_move_card(color, card_name, selectable) {
     return card_div;
 }
 
-let game_state = init_game_state();
+let GAME_STATE = init_game_state();
 draw_game_state();
