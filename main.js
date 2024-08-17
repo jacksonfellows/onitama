@@ -158,7 +158,14 @@ function handle_move(start_row, start_col, end_row, end_col) {
             GAME_STATE.interactable = false;
         } else {
             if (GAME_STATE.current_turn == "black" && AI_MODE) {
-                handle_move(...get_ai_move());
+                // Wait to get AI's move until screen has been drawn.
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        let [_, move, row, col, dst_row, dst_col] = get_ai_move(GAME_STATE, MAX_LEVEL);
+                        GAME_STATE.selected_move = move;
+                        handle_move(row, col, dst_row, dst_col);
+                    });
+                });
             }
         }
     } else {
@@ -181,7 +188,6 @@ function score_game_state(game_state) {
         for (let col = 0; col < 5; col++) {
             let square = game_state.board[row][col];
             if (square != EMPTY) {
-                // Flipped bc. we evaluate after a move has been made (it is now the opponent's turn).
                 if (get_color(square) != game_state.current_turn) {
                     score += piece_score(square);
                 } else {
@@ -200,7 +206,6 @@ function get_all_moves(game_state) {
         for (let row = 0; row < 5; row++) {
             for (let col = 0; col < 5; col++) {
                 if (game_state.board[row][col] != EMPTY && get_color(game_state.board[row][col]) == game_state.current_turn) {
-                    // Move first piece.
                     let valid_moves = get_valid_moves(game_state, row, col);
                     for (let [dst_row, dst_col] of valid_moves) {
                         all_moves.push([move, row, col, dst_row, dst_col]);
@@ -212,29 +217,50 @@ function get_all_moves(game_state) {
     return all_moves;
 }
 
-function deepcopy(object) {
-    // TODO dumb
-    return JSON.parse(JSON.stringify(object));
-}
+let MAX_LEVEL = 4;
 
-function get_ai_move() {
-    let moves = get_all_moves(GAME_STATE);
+function get_ai_move(start_game_state, level) {
+    let moves = get_all_moves(start_game_state);
     let best_move = null;
-    let best_move_score = -1;
+    let best_move_score = -1000;
+    let score = null;
+    if (level == MAX_LEVEL) {
+        console.log("---");
+    }
     for (let [move, row, col, dst_row, dst_col] of moves) {
         // Try the move and score it.
-        game_state = deepcopy(GAME_STATE);
+        game_state = structuredClone(start_game_state);
         game_state.selected_move = move;
+        let capture = game_state.board[dst_row][dst_col];
+        let master_captured = (game_state.current_turn == "white" && capture == BM) || (game_state.current_turn == "black" && capture == WM)
         update_game_state_move(game_state, row, col, dst_row, dst_col);
-        let score = score_game_state(game_state);
+        let master_in_other_base = (game_state.current_turn == "black" && game_state.board[0][2] == WM) || (game_state.current_turn == "white" && game_state.board[4][2] == BM)
+
+        if (master_captured || master_in_other_base) {
+            // This move wins!
+            score = 100;
+        } else {
+            // Otherwise, keep exploring game tree.
+            if (level > 0) {
+                let nested_best = get_ai_move(game_state, level - 1);
+                [nested_best_score, nested_best_move, nested_row, nested_col, nested_dst_row, nested_dst_col] = nested_best;
+                game_state.selected_move = nested_best_move;
+                update_game_state_move(game_state, nested_row, nested_col, nested_dst_row, nested_dst_col);
+                score = -nested_best_score;
+            } else {
+                score = score_game_state(game_state);
+            }
+        }
+
         if (score > best_move_score) {
+            if (level == MAX_LEVEL) {
+                console.log(`new best move ${move}, ${row}, ${col}, ${dst_row}, ${dst_col} -- ${score}`);
+            }
             best_move = [move, row, col, dst_row, dst_col];
             best_move_score = score;
         }
     }
-    let [move, row, col, dst_row, dst_col] = best_move;
-    GAME_STATE.selected_move = move;
-    return [row, col, dst_row, dst_col];
+    return [best_move_score, ...best_move];
 }
 
 let move_cards = {
@@ -271,6 +297,13 @@ let move_cards = {
         [0, 0, 1, 0, 0],
         [0, 1, 0, 1, 0],
         [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0]
+    ],
+    dragon: [
+        [0, 0, 0, 0, 0],
+        [1, 0, 0, 0, 1],
+        [0, 0, 0, 0, 0],
+        [0, 1, 0, 1, 0],
         [0, 0, 0, 0, 0]
     ]
 };
