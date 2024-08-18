@@ -11,13 +11,13 @@ for (let row = 0; row < 5; row++) {
 let start_row_col = null;
 for (let row = 0; row < 5; row++) {
     for (let col = 0; col < 5; col++) {
-        board_divs[row][col].addEventListener("mousedown", _ => {
+        let start_listener = _ => {
             if (GAME_STATE.interactable && GAME_STATE.board[row][col] != EMPTY) {
                 handle_move_attempt_start(row, col);
                 start_row_col = [row, col];
             }
-        });
-        board_divs[row][col].addEventListener("mouseup", _ => {
+        }
+        let mouse_end_listener = _ => {
             if (GAME_STATE.interactable && start_row_col) {
                 handle_move_attempt_end();
                 [start_row, start_col] = start_row_col;
@@ -26,7 +26,30 @@ for (let row = 0; row < 5; row++) {
                 }
                 start_row_col = null;
             }
-        });
+        }
+        // Touch end fires on original element, not where the touch actually ends.
+        let touch_end_listener = e => {
+            let changedTouch = e.changedTouches[0];
+            let elem = document.elementFromPoint(changedTouch.clientX, changedTouch.clientY);
+            // Search for matching div.
+            for (let row = 0; row < 5; row++) {
+                for (let col = 0; col < 5; col++) {
+                    if (elem == board_divs[row][col]) {
+                        handle_move_attempt_end();
+                        [start_row, start_col] = start_row_col;
+                        if (start_row != row || start_col != col) {
+                            handle_move(start_row, start_col, row, col);
+                        }
+                        start_row_col = null;
+                        return;
+                    }
+                }
+            }
+        }
+        board_divs[row][col].addEventListener("mousedown", start_listener);
+        board_divs[row][col].addEventListener("touchstart", start_listener);
+        board_divs[row][col].addEventListener("mouseup", mouse_end_listener);
+        board_divs[row][col].addEventListener("touchend", touch_end_listener);
     }
 }
 

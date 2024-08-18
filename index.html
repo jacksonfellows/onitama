@@ -1,5 +1,18 @@
 <head>
   <style>
+    body {
+        /* Stop scrolling! */
+        overscroll-behavior: none;
+        overflow-x: hidden;
+        overflow-y: hidden;
+
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -khtml-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
     .square {
         border: solid 1px black;
         background-size: cover;
@@ -19,20 +32,25 @@
     .white_master {
         background-image: url("resources/white_master.svg");
     }
+    :root {
+        --board-width: max(325px, min(50vw, 100vh - 2*100px));
+        --card-width: calc(var(--board-width)/2 - 10px);
+    }
     .move-card {
         justify-content: center;
         padding-top: 5px;
         padding-bottom: 5px;
         display: grid;
         grid-template-columns: 1fr 1fr;
-        min-width: 250px;
+        width: 100%;
         background-color: lightgrey;
     }
     .move-card-grid {
         display: grid;
-        grid-template-columns: repeat(5, 20px);
-        grid-auto-rows: 20px;
-        gap: 1.67px;
+        grid-template-columns: repeat(5, 12px);
+        grid-auto-rows: 12px;
+        gap: 1px;
+        justify-content: center;
     }
     .move-card-text {
         font-size: 18pt;
@@ -67,17 +85,25 @@
         align-items: center;
     }
     #next-black-move {
-        margin-right: 10px;
-        justify-content: right;
+        /* display: grid; */
+        /* grid-template-columns: 1fr; */
+        margin-right: 5px;
     }
     #next-white-move {
-        margin-left: 10px;
-        justify-content: left;
+        /* display: grid; */
+        /* grid-template-columns: var(--card-width); */
+        margin-left: 5px;
     }
     #main {
         display: grid;
-        grid-template-columns: 1fr 540px 1fr;
+        grid-template-columns: var(--card-width) var(--board-width) var(--card-width);
         justify-content: center;
+    }
+    #board {
+        display: grid;
+        grid-template-columns: repeat(5, calc((var(--board-width) - 40px)/5));
+        grid-auto-rows: calc((var(--board-width) - 40px)/5);
+        gap: 10px;
     }
     .selected-move {
         background: yellow;
@@ -90,7 +116,7 @@
     <div class="move-cards" id="black-moves"></div>
     <div></div>
     <div class="next-move" id="next-black-move"></div>
-    <div id="board" style="display: grid; grid-template-columns: repeat(5, 100px); grid-auto-rows: 100px; gap: 10px;">
+    <div id="board">
       <div class="square" id="11"></div>
       <div class="square" id="12"></div>
       <div class="square" id="13"></div>
