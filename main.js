@@ -29,19 +29,21 @@ for (let row = 0; row < 5; row++) {
         }
         // Touch end fires on original element, not where the touch actually ends.
         let touch_end_listener = e => {
-            let changedTouch = e.changedTouches[0];
-            let elem = document.elementFromPoint(changedTouch.clientX, changedTouch.clientY);
-            // Search for matching div.
-            for (let row = 0; row < 5; row++) {
-                for (let col = 0; col < 5; col++) {
-                    if (elem == board_divs[row][col]) {
-                        handle_move_attempt_end();
-                        [start_row, start_col] = start_row_col;
-                        if (start_row != row || start_col != col) {
-                            handle_move(start_row, start_col, row, col);
+            if (GAME_STATE.interactable && start_row_col) {
+                let changedTouch = e.changedTouches[0];
+                let elem = document.elementFromPoint(changedTouch.clientX, changedTouch.clientY);
+                // Search for matching div.
+                for (let row = 0; row < 5; row++) {
+                    for (let col = 0; col < 5; col++) {
+                        if (elem == board_divs[row][col]) {
+                            handle_move_attempt_end();
+                            [start_row, start_col] = start_row_col;
+                            if (start_row != row || start_col != col) {
+                                handle_move(start_row, start_col, row, col);
+                            }
+                            start_row_col = null;
+                            return;
                         }
-                        start_row_col = null;
-                        return;
                     }
                 }
             }
