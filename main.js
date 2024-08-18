@@ -154,11 +154,14 @@ function handle_move(start_row, start_col, end_row, end_col) {
 
         if (master_captured || master_in_other_base) {
             let winner = {white: "black", black: "white"}[GAME_STATE.current_turn];
-            window.alert(`${winner} wins!`);
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    window.alert(`${winner} wins!`);
+                });
+            });
             GAME_STATE.interactable = false;
         } else {
             if (GAME_STATE.current_turn == "black" && AI_MODE) {
-                // Wait to get AI's move until screen has been drawn.
                 requestAnimationFrame(() => {
                     requestAnimationFrame(() => {
                         let [_, move, row, col, dst_row, dst_col] = get_ai_move(GAME_STATE, MAX_LEVEL);
@@ -254,7 +257,7 @@ function get_ai_move(start_game_state, level) {
 
         if (score > best_move_score) {
             if (level == MAX_LEVEL) {
-                console.log(`new best move ${move}, ${row}, ${col}, ${dst_row}, ${dst_col} -- ${score}`);
+                console.log(`new best move '${move}', (${row},${col}) -> (${dst_row},${dst_col}), score=${score}`);
             }
             best_move = [move, row, col, dst_row, dst_col];
             best_move_score = score;
@@ -304,6 +307,27 @@ let move_cards = {
         [1, 0, 0, 0, 1],
         [0, 0, 0, 0, 0],
         [0, 1, 0, 1, 0],
+        [0, 0, 0, 0, 0]
+    ],
+    giraffe: [
+        [0, 0, 0, 0, 0],
+        [1, 0, 0, 0, 1],
+        [0, 0, 0, 0, 0],
+        [0, 0, 1, 0, 0],
+        [0, 0, 0, 0, 0]
+    ],
+    fox: [
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 1, 0],
+        [0, 0, 0, 1, 0],
+        [0, 0, 0, 1, 0],
+        [0, 0, 0, 0, 0]
+    ],
+    iguana: [
+        [0, 0, 0, 0, 0],
+        [1, 0, 1, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 1, 0],
         [0, 0, 0, 0, 0]
     ]
 };
