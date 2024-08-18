@@ -21,15 +21,33 @@
     }
     .move-card {
         justify-content: center;
+        padding-top: 5px;
+        padding-bottom: 5px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        min-width: 250px;
+        background-color: lightgrey;
+    }
+    .move-card-grid {
         display: grid;
         grid-template-columns: repeat(5, 20px);
         grid-auto-rows: 20px;
         gap: 1.67px;
-        padding-top: 5px;
-        padding-bottom: 5px;
+    }
+    .move-card-text {
+        font-size: 18pt;
+        font-weight: bold;
+        font-family: sans-serif;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .move-card-upside-down {
+        transform: rotate(180deg);
     }
     .move-card-square {
         border: solid 1px black;
+        background-color: white;
     }
     .move-card-valid {
         background-color: grey;

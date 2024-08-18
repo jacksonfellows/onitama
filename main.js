@@ -257,7 +257,7 @@ function get_ai_move(start_game_state, level) {
 
         if (score > best_move_score) {
             if (level == MAX_LEVEL) {
-                console.log(`new best move '${move}', (${row},${col}) -> (${dst_row},${dst_col}), score=${score}`);
+                console.log(`new best move '${move_cards[move].name}', (${row},${col}) -> (${dst_row},${dst_col}), score=${score}`);
             }
             best_move = [move, row, col, dst_row, dst_col];
             best_move_score = score;
@@ -266,78 +266,105 @@ function get_ai_move(start_game_state, level) {
     return [best_move_score, ...best_move];
 }
 
-let move_cards = {
-    monkey: [
-        [0, 0, 0, 0, 0],
-        [0, 1, 0, 1, 0],
-        [0, 0, 0, 0, 0],
-        [0, 1, 0, 1, 0],
-        [0, 0, 0, 0, 0]
-    ],
-    tiger: [
-        [0, 0, 1, 0, 0],
-        [0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0],
-        [0, 0, 1, 0, 0],
-        [0, 0, 0, 0, 0]
-    ],
-    rooster: [
-        [0, 0, 0, 0, 0],
-        [0, 0, 0, 1, 0],
-        [0, 1, 0, 1, 0],
-        [0, 1, 0, 0, 0],
-        [0, 0, 0, 0, 0]
-    ],
-    goose: [
-        [0, 0, 0, 0, 0],
-        [0, 1, 0, 0, 0],
-        [0, 1, 0, 1, 0],
-        [0, 0, 0, 1, 0],
-        [0, 0, 0, 0, 0]
-    ],
-    boar: [
-        [0, 0, 0, 0, 0],
-        [0, 0, 1, 0, 0],
-        [0, 1, 0, 1, 0],
-        [0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0]
-    ],
-    dragon: [
-        [0, 0, 0, 0, 0],
-        [1, 0, 0, 0, 1],
-        [0, 0, 0, 0, 0],
-        [0, 1, 0, 1, 0],
-        [0, 0, 0, 0, 0]
-    ],
-    giraffe: [
-        [0, 0, 0, 0, 0],
-        [1, 0, 0, 0, 1],
-        [0, 0, 0, 0, 0],
-        [0, 0, 1, 0, 0],
-        [0, 0, 0, 0, 0]
-    ],
-    fox: [
-        [0, 0, 0, 0, 0],
-        [0, 0, 0, 1, 0],
-        [0, 0, 0, 1, 0],
-        [0, 0, 0, 1, 0],
-        [0, 0, 0, 0, 0]
-    ],
-    iguana: [
-        [0, 0, 0, 0, 0],
-        [1, 0, 1, 0, 0],
-        [0, 0, 0, 0, 0],
-        [0, 0, 0, 1, 0],
-        [0, 0, 0, 0, 0]
-    ]
-};
+let move_cards = [
+    {
+        name: "Monkey",
+        moves: [
+            [0, 0, 0, 0, 0],
+            [0, 1, 0, 1, 0],
+            [0, 0, 0, 0, 0],
+            [0, 1, 0, 1, 0],
+            [0, 0, 0, 0, 0]
+        ]
+    },
+    {
+        name: "Tiger",
+        moves: [
+            [0, 0, 1, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, 0, 1, 0, 0],
+            [0, 0, 0, 0, 0]
+        ]
+    },
+    {
+        name: "Rooster",
+        moves: [
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 1, 0],
+            [0, 1, 0, 1, 0],
+            [0, 1, 0, 0, 0],
+            [0, 0, 0, 0, 0]
+        ]
+    },
+    {
+        name: "Goose",
+        moves: [
+            [0, 0, 0, 0, 0],
+            [0, 1, 0, 0, 0],
+            [0, 1, 0, 1, 0],
+            [0, 0, 0, 1, 0],
+            [0, 0, 0, 0, 0]
+        ]
+    },
+    {
+        name: "Boar",
+        moves: [
+            [0, 0, 0, 0, 0],
+            [0, 0, 1, 0, 0],
+            [0, 1, 0, 1, 0],
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0]
+        ]
+    },
+    {
+        name: "Dragon",
+        moves: [
+            [0, 0, 0, 0, 0],
+            [1, 0, 0, 0, 1],
+            [0, 0, 0, 0, 0],
+            [0, 1, 0, 1, 0],
+            [0, 0, 0, 0, 0]
+        ]
+    },
+    {
+        name: "Giraffe",
+        moves: [
+            [0, 0, 0, 0, 0],
+            [1, 0, 0, 0, 1],
+            [0, 0, 0, 0, 0],
+            [0, 0, 1, 0, 0],
+            [0, 0, 0, 0, 0]
+        ]
+    },
+    {
+        name: "Fox",
+        moves: [
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 1, 0],
+            [0, 0, 0, 1, 0],
+            [0, 0, 0, 1, 0],
+            [0, 0, 0, 0, 0]
+        ]
+    },
+    {
+        name: "Iguana",
+        moves: [
+            [0, 0, 0, 0, 0],
+            [1, 0, 1, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 1, 0],
+            [0, 0, 0, 0, 0]
+        ]
+    }
+];
 
 let move_cards_offsets = {};
 for (let card_name in move_cards) {
     let offsets = [];
     for (let row = 0; row < 5; row++) {
         for (let col = 0; col < 5; col++) {
-            if (move_cards[card_name][row][col]) {
+            if (move_cards[card_name].moves[row][col]) {
                 offsets.push([row - 2, col - 2])
             }
         }
@@ -403,6 +430,13 @@ function handle_move_select(color, card_name, div) {
 function draw_move_card(color, card_name, selectable) {
     let card_div = document.createElement("div");
     card_div.classList.add("move-card");
+    let inner_card_div = document.createElement("div");
+    let name = document.createElement("div");
+    name.innerHTML = move_cards[card_name].name;
+    name.classList.add("move-card-text");
+    card_div.appendChild(name);
+    card_div.appendChild(inner_card_div);
+    inner_card_div.classList.add("move-card-grid");
     for (let row = 0; row < 5; row++) {
         for (let col = 0; col < 5; col++) {
             let square_div = document.createElement("div");
@@ -410,22 +444,19 @@ function draw_move_card(color, card_name, selectable) {
             if (row == 2 && col == 2) {
                 square_div.classList.add("move-card-self");
             }
-            let row_ = row;
-            let col_ = col;
-            if (color == "black") {
-                row_ = 2 - (row_ - 2);
-                col_ = 2 - (col_ - 2);
-            }
-            if (move_cards[card_name][row_][col_]) {
+            if (move_cards[card_name].moves[row][col]) {
                 square_div.classList.add("move-card-valid");
             }
-            card_div.appendChild(square_div);
+            inner_card_div.appendChild(square_div);
         }
     }
     if (selectable) {
         card_div.addEventListener("click", _ => {
             handle_move_select(color, card_name, card_div);
         })
+    }
+    if (color == "black") {
+        card_div.classList.add("move-card-upside-down");
     }
     return card_div;
 }
