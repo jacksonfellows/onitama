@@ -265,8 +265,8 @@ function get_ai_move(start_game_state, level) {
         let master_in_other_base = (game_state.current_turn == "black" && game_state.board[0][2] == WM) || (game_state.current_turn == "white" && game_state.board[4][2] == BM)
 
         if (master_captured || master_in_other_base) {
-            // This move wins!
-            score = 100;
+            // This move wins! Weight by search level to favor shorter mates.
+            score = level*100;
         } else {
             // Otherwise, keep exploring game tree.
             if (level > 0) {
